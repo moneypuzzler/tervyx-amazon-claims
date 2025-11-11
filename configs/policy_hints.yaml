@@ -1,0 +1,98 @@
+# TERVYX Amazon Claims — Policy Hints (Gate Signal Mapping)
+# These hint IDs map 1:1 with A-repo policy rules (Φ/K/L gates)
+# This file does NOT make judgments; it only tags claims for downstream processing
+
+phi:
+  # Φ gate: physics/physiology/routing violations
+  phi_quantum:
+    description: "Quantum/scalar energy claims (non-contact energy transfer)"
+    patterns:
+      - "\\bquantum\\b"
+      - "scalar energy"
+      - "energy field"
+      - "bio-energy"
+
+  phi_magnetic:
+    description: "Magnetic therapy without plausible mechanism"
+    patterns:
+      - "magnetic therapy"
+      - "magnet(ic)? bracelet"
+      - "biomagnetic"
+      - "magnetic field healing"
+
+  phi_ionic_detox:
+    description: "Ionic detox foot baths (no credible mechanism)"
+    patterns:
+      - "ionic detox"
+      - "detox foot bath"
+      - "ion cleanse"
+      - "foot spa detox"
+
+  phi_homeopathy:
+    description: "Homeopathic dilutions beyond Avogadro limit"
+    patterns:
+      - "homeopathic"
+      - "\\b\\d+[CX]\\b"  # 30C, 200X dilutions
+      - "oscillococcinum"
+      - "ultra-diluted"
+
+k:
+  # K gate: safety/regulatory violations
+  k_tejocote:
+    description: "Tejocote root (cardiac glycoside risk)"
+    patterns:
+      - "tejocote"
+      - "raiz de tejocote"
+
+  k_colloidal_silver:
+    description: "Colloidal silver (argyria risk, no proven benefit)"
+    patterns:
+      - "colloidal silver"
+      - "sovereign silver"
+      - "silver solution"
+      - "silver hydrosol"
+
+  k_kratom:
+    description: "Kratom (DEA concern, dependency risk)"
+    patterns:
+      - "kratom"
+      - "mitragyna speciosa"
+
+  k_germanium:
+    description: "Germanium supplements (nephrotoxicity)"
+    patterns:
+      - "germanium"
+      - "ge-132"
+
+  k_aristolochic:
+    description: "Aristolochic acid (carcinogenic, nephrotoxic)"
+    patterns:
+      - "aristolochia"
+      - "birthwort"
+
+l:
+  # L gate: exaggeration/overstatement penalties
+  weights:
+    miracle: 3
+    cure: 3
+    "100%": 2
+    instant: 2
+    permanent: 2
+    guaranteed: 2
+    "clinically proven": 1
+    "doctor recommended": 1
+    "scientifically proven": 1
+    "FDA approved": 1  # Often misused for supplements
+    breakthrough: 1
+    revolutionary: 1
+
+# FDA warning list (for K gate matching)
+fda_warnings:
+  - "mitragyna speciosa"
+  - "colloidal silver"
+  - "germanium"
+
+# Ingredient normalization (common aliases)
+ingredient_aliases:
+  "mitragyna speciosa": ["kratom", "ketum", "thang"]
+  "crataegus pinnatifida": ["tejocote", "mexican hawthorn"]

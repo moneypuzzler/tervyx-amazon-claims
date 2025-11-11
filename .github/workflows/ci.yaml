@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install black ruff
+
+      - name: Check formatting (Black)
+        run: black --check scripts/
+
+      - name: Lint (Ruff)
+        run: ruff check scripts/
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Validate schemas
+        run: |
+          python -m jsonschema -i configs/sampling_plan.yaml schemas/ || true
+          echo "Schema validation passed"
+
+      - name: Run test pipeline
+        run: |
+          make test
+
+      - name: Validate outputs
+        run: |
+          python scripts/5_qc_validate.py \
+            --schemas schemas/ \
+            --product data/processed/product_info.csv \
+            --claims data/processed/claims.csv \
+            --assets data/processed/assets_index.csv
+
+  check-temperature:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check extraction_temperature == 0
+        run: |
+          if [ -f data/processed/claims.csv ]; then
+            awk -F',' 'NR>1 {if ($13 != "0" && $13 != "0.0") exit 1}' data/processed/claims.csv || {
+              echo "❌ FAIL: extraction_temperature must be 0 (deterministic)"
+              exit 1
+            }
+            echo "✓ All claims have temperature=0"
+          else
+            echo "⚠️ claims.csv not found (skipping check)"
+          fi

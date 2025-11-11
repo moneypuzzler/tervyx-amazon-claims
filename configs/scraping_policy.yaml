@@ -1,0 +1,38 @@
+# TERVYX Amazon Claims — Scraping Policy (Ethics & Safety)
+
+# Robots.txt compliance
+robots_respect: true
+
+# Throttling (seconds between requests)
+throttle_seconds: 3
+max_concurrent_requests: 1  # Sequential only (safest)
+
+# Retries & timeouts
+max_retries: 2
+timeout_seconds: 15
+backoff_factor: 2  # Exponential backoff: 2s, 4s, 8s
+
+# User-Agent (transparent identification)
+user_agent: "TERVYX-Protocol-Research-Bot/1.0 (+https://tervyx.org/rule-to-market; research@tervyx.org)"
+
+# Domain restrictions
+domain_whitelist:
+  - "www.amazon.com"
+
+# Wayback Machine archival
+wayback_save: true
+wayback_api_url: "https://web.archive.org/save/"
+
+# Storage
+save_html_snapshot_sample: false  # Set true only for audit samples
+max_html_sample_size: 10  # Max number of HTML snapshots to save
+
+# Rate limiting (per hour)
+max_requests_per_hour: 100
+
+# Scope restrictions
+max_pages_per_category: 50
+max_products_per_search: 20
+
+# Public pages only (no login/paywall)
+require_public_access: true

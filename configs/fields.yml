@@ -1,0 +1,293 @@
+# TERVYX Amazon Claims — Data Dictionary (CSV Field Definitions)
+
+product_info:
+  description: "One row per product (ASIN)"
+  fields:
+    - name: asin
+      type: string
+      required: true
+      description: "Amazon Standard Identification Number"
+
+    - name: platform
+      type: string
+      required: true
+      description: "Always 'amazon'"
+
+    - name: category_path
+      type: string
+      required: false
+      description: "Category breadcrumb (e.g., 'Health & Household > Vitamins > B12')"
+
+    - name: intervention_type
+      type: enum
+      required: true
+      description: "supplement | device_noninvasive | food | behavioral | cosmetic | pharmaceutical | other"
+
+    - name: product_title
+      type: string
+      required: true
+      description: "Product title (verbatim)"
+
+    - name: brand
+      type: string
+      required: false
+
+    - name: price
+      type: float
+      required: false
+
+    - name: currency
+      type: string
+      required: false
+      description: "ISO 4217 code (e.g., USD)"
+
+    - name: product_url
+      type: url
+      required: true
+
+    - name: wayback_url
+      type: url
+      required: true
+      description: "Wayback Machine archive URL"
+
+    - name: captured_at
+      type: datetime
+      required: true
+      description: "ISO8601 UTC timestamp"
+
+    - name: sampling_cohort
+      type: enum
+      required: true
+      description: "R (representative) | T (targeted)"
+
+    - name: selection_method
+      type: enum
+      required: true
+      description: "random | node_id | keyword | bestseller"
+
+    - name: sampling_weight
+      type: float
+      required: false
+      description: "Sampling weight for R cohort (empty for T)"
+
+    - name: sampling_frame_version
+      type: string
+      required: true
+
+    - name: product_sha256
+      type: string
+      required: true
+      description: "Hash of primary page content"
+
+    - name: ingredients_raw
+      type: string
+      required: false
+      description: "Raw ingredient list text"
+
+    - name: ingredients_norm
+      type: json_string
+      required: false
+      description: "Normalized ingredient list (JSON array)"
+
+    - name: risk_hits
+      type: json_string
+      required: false
+      description: "K policy hint IDs matched (JSON array)"
+
+    - name: fda_warning_match
+      type: boolean
+      required: false
+
+    - name: phi_any_candidate
+      type: boolean
+      required: false
+      description: "Any claim has phi_hint_ids"
+
+    - name: k_any_candidate
+      type: boolean
+      required: false
+
+    - name: l_max_token_score
+      type: integer
+      required: false
+      description: "Max L score across all claims"
+
+claims:
+  description: "One row per claim (can be multiple claims per ASIN)"
+  fields:
+    - name: asin
+      type: string
+      required: true
+
+    - name: claim_id
+      type: string
+      required: true
+      description: "Unique claim identifier (asin + sequence)"
+
+    - name: claim_text_verbatim
+      type: string
+      required: true
+      description: "Exact claim text (no paraphrasing)"
+
+    - name: claim_type
+      type: enum
+      required: true
+      description: "efficacy | safety | mechanism | medical"
+
+    - name: implied_outcome
+      type: string
+      required: false
+      description: "sleep_quality | hair_growth | weight_loss | pain_relief | anti_aging | detox | cardiovascular | cognitive | other"
+
+    - name: quantifier
+      type: string
+      required: false
+      description: "Quantifier text (e.g., '87%', 'instant', '100%')"
+
+    - name: has_citation
+      type: boolean
+      required: true
+
+    - name: source
+      type: enum
+      required: true
+      description: "html | image"
+
+    - name: ocr_bbox
+      type: string
+      required: false
+      description: "Bounding box [x1,y1,x2,y2] for image sources"
+
+    - name: extraction_model
+      type: string
+      required: true
+
+    - name: extraction_version
+      type: string
+      required: true
+
+    - name: extraction_temperature
+      type: float
+      required: true
+      description: "MUST be 0.0"
+
+    - name: claim_sha256
+      type: string
+      required: true
+
+    - name: page_sha256
+      type: string
+      required: true
+
+    - name: claim_scope
+      type: enum
+      required: true
+      description: "medical | cosmetic | wellness | device_mechanism"
+
+    - name: has_numeric_quantifier
+      type: boolean
+      required: true
+
+    - name: quant_value
+      type: string
+      required: false
+
+    - name: quant_unit
+      type: string
+      required: false
+
+    - name: comparator
+      type: string
+      required: false
+      description: "e.g., 'vs placebo'"
+
+    - name: phi_hint_ids
+      type: json_string
+      required: false
+      description: "Φ gate hint IDs (JSON array)"
+
+    - name: k_hint_ids
+      type: json_string
+      required: false
+
+    - name: l_tokens
+      type: json_string
+      required: false
+      description: "L gate tokens matched (JSON array)"
+
+    - name: l_token_score
+      type: integer
+      required: false
+
+    - name: ingredient_hits
+      type: json_string
+      required: false
+
+    - name: medical_scope_flag
+      type: boolean
+      required: true
+
+    - name: evidence_anchor_id
+      type: string
+      required: false
+      description: "Placeholder for future PubMed linkage"
+
+    - name: extract_confidence
+      type: float
+      required: true
+      description: "0-1 confidence score"
+
+    - name: claim_group_id
+      type: string
+      required: false
+      description: "Groups duplicate claims (HTML + image)"
+
+    - name: gate_hint
+      type: enum
+      required: true
+      description: "none | phi_candidate | k_candidate | l_soft | l_hard"
+
+    - name: review_needed
+      type: boolean
+      required: true
+
+assets_index:
+  description: "Index of HTML/image assets"
+  fields:
+    - name: asin
+      type: string
+      required: true
+
+    - name: asset_id
+      type: string
+      required: true
+
+    - name: asset_type
+      type: enum
+      required: true
+      description: "html | image"
+
+    - name: url
+      type: url
+      required: true
+
+    - name: wayback_url
+      type: url
+      required: false
+
+    - name: sha256
+      type: string
+      required: true
+
+    - name: storage_uri
+      type: string
+      required: false
+      description: "S3/external storage URI (NOT in repo)"
+
+    - name: width
+      type: integer
+      required: false
+
+    - name: height
+      type: integer
+      required: false
