@@ -128,7 +128,8 @@ def main():
 
     # Check critical fields
     print("\n[4/4] Checking critical fields...")
-    required_claims = ["wayback_url", "page_sha256", "claim_sha256"]
+    # Note: wayback_url is in product_info, not claims (join via page_sha256)
+    required_claims = ["page_sha256", "claim_sha256"]
     passed, errors = check_required_fields(args.claims, required_claims)
     if passed:
         print("  ✓ All critical fields present")
