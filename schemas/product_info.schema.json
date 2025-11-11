@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Product Info Schema",
+  "type": "object",
+  "required": [
+    "asin",
+    "platform",
+    "intervention_type",
+    "product_title",
+    "product_url",
+    "wayback_url",
+    "captured_at",
+    "sampling_cohort",
+    "selection_method",
+    "sampling_frame_version",
+    "product_sha256"
+  ],
+  "properties": {
+    "asin": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]{10}$"
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["amazon"]
+    },
+    "category_path": {
+      "type": ["string", "null"]
+    },
+    "intervention_type": {
+      "type": "string",
+      "enum": [
+        "supplement",
+        "device_noninvasive",
+        "food",
+        "behavioral",
+        "cosmetic",
+        "pharmaceutical",
+        "other"
+      ]
+    },
+    "product_title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "brand": {
+      "type": ["string", "null"]
+    },
+    "price": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "currency": {
+      "type": ["string", "null"]
+    },
+    "product_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "wayback_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sampling_cohort": {
+      "type": "string",
+      "enum": ["R", "T"]
+    },
+    "selection_method": {
+      "type": "string",
+      "enum": ["random", "node_id", "keyword", "bestseller"]
+    },
+    "sampling_weight": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "sampling_frame_version": {
+      "type": "string",
+      "pattern": "^v\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "product_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ingredients_raw": {
+      "type": ["string", "null"]
+    },
+    "ingredients_norm": {
+      "type": ["string", "null"]
+    },
+    "risk_hits": {
+      "type": ["string", "null"]
+    },
+    "fda_warning_match": {
+      "type": ["boolean", "null"]
+    },
+    "phi_any_candidate": {
+      "type": ["boolean", "null"]
+    },
+    "k_any_candidate": {
+      "type": ["boolean", "null"]
+    },
+    "l_max_token_score": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,77 @@
+# TERVYX Amazon Claims — Sampling Plan (R/T Cohorts)
+# R: Representative (stratified random) → population estimation with weights
+# T: Targeted (high-risk keywords/nodes) → stress test for Φ/K/L gates
+
+representative:
+  target_n: 700
+  description: "Stratified random sample across health/beauty/device categories"
+  strata:
+    - name: HealthAndHousehold
+      query: "site:amazon.com Health & Household"
+      allocation: 0.35
+
+    - name: Beauty
+      query: "site:amazon.com Beauty hair growth anti-aging"
+      allocation: 0.20
+
+    - name: Devices
+      query: "site:amazon.com Electric Massagers TENS Pain Relief"
+      allocation: 0.15
+
+    - name: Sleep
+      query: "site:amazon.com Sleep Aid Melatonin Relaxation"
+      allocation: 0.10
+
+    - name: WeightLoss
+      query: "site:amazon.com Weight Loss Supplements Fat Burner"
+      allocation: 0.10
+
+    - name: HairGrowth
+      query: "site:amazon.com Hair Regrowth Hair Growth Products"
+      allocation: 0.10
+
+targeted:
+  target_n: 300
+  description: "High-risk products for Φ/K/L gate validation"
+
+  nodes:
+    # Φ (physics/physiology violation candidates)
+    - name: MagneticTherapy
+      path_hint: "Alternative Medicine > Magnetic Field Therapy"
+      keywords: ["magnetic bracelet", "magnetic therapy", "biomagnetic"]
+      gate: "Φ"
+
+    - name: IonicDetox
+      path_hint: "Foot Massagers > Ionic Detox"
+      keywords: ["ionic detox", "detox foot bath", "ion cleanse"]
+      gate: "Φ"
+
+    - name: QuantumPendants
+      keywords: ["quantum pendant", "scalar energy", "energy field", "negative ion"]
+      gate: "Φ"
+
+    - name: Homeopathic
+      keywords: ["homeopathic", "oscillococcinum", "boiron", "dilution 30C"]
+      gate: "Φ"
+
+    # K (safety/regulatory violation candidates)
+    - name: ColloidalSilver
+      browse_node_id: 12373542031  # Example node ID
+      keywords: ["colloidal silver", "sovereign silver", "silver solution"]
+      gate: "K"
+
+    - name: Tejocote
+      keywords: ["tejocote root", "raiz de tejocote"]
+      gate: "K"
+
+    - name: Kratom
+      keywords: ["kratom", "mitragyna speciosa"]
+      gate: "K"
+
+    # L (exaggeration candidates)
+    - name: MiracleClaims
+      keywords: ["miracle", "cure", "instant", "100% effective", "clinically proven"]
+      gate: "L"
+      min_l_score: 3
+
+sampling_frame_version: "v2025-11-12"

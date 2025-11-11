@@ -1,0 +1,41 @@
+# TERVYX Amazon Claims — Extraction Policy (LLM = Extraction Only)
+
+# LLM settings (MUST be deterministic)
+use_llm: true
+model: "gemini-2.0-flash-exp"  # Low-cost, fast
+temperature: 0  # REQUIRED: deterministic only
+json_mode: true
+max_tokens: 2048
+
+# Extraction tasks (LLM is extraction assistant, NOT judge)
+tasks:
+  - "Extract all health/efficacy claims from product page (verbatim text)"
+  - "Identify quantifiers (percentages, absolute numbers, time claims)"
+  - "Classify claim_type: efficacy | safety | mechanism | medical"
+  - "Map implied_outcome if obvious (sleep, hair_growth, weight_loss, etc.)"
+  - "Extract ingredients list if present"
+  - "Record OCR bounding boxes for image-based claims"
+
+# Extraction sources (priority order)
+sources:
+  - html_text      # Primary: product description, bullets, A+ content
+  - html_tables    # Tables with study results
+  - images         # Last resort: OCR + optional LLM assistance
+
+# OCR settings
+ocr_engine: "tesseract"  # Or cloud OCR API
+ocr_lang: "eng"
+ocr_confidence_threshold: 0.7
+
+# Quality filters
+min_claim_length: 10  # characters
+max_claim_length: 500
+require_ascii: false  # Allow unicode for ingredient names
+
+# Deduplication
+claim_similarity_threshold: 0.85  # Cosine similarity for grouping duplicates
+
+# Confidence tracking
+record_extraction_confidence: true
+flag_low_confidence_for_review: true
+low_confidence_threshold: 0.7

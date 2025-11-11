@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Assets Index Schema",
+  "type": "object",
+  "required": [
+    "asin",
+    "asset_id",
+    "asset_type",
+    "url",
+    "sha256"
+  ],
+  "properties": {
+    "asin": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]{10}$"
+    },
+    "asset_id": {
+      "type": "string"
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": ["html", "image"]
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "wayback_url": {
+      "type": ["string", "null"],
+      "format": "uri"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "storage_uri": {
+      "type": ["string", "null"]
+    },
+    "width": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "height": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    }
+  }
+}

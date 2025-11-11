@@ -1,0 +1,23 @@
+# Core
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+pandas>=2.0.0
+numpy>=1.24.0
+pyyaml>=6.0
+pydantic>=2.0.0
+jsonschema>=4.17.0
+tqdm>=4.65.0
+
+# Image processing (optional, for OCR)
+pillow>=10.0.0
+# pytesseract>=0.3.10  # Uncomment if using local OCR
+
+# LLM (optional, for extraction assistance)
+# google-generativeai>=0.3.0  # Uncomment if using Gemini
+
+# Development
+black>=23.0.0
+ruff>=0.1.0
+mypy>=1.5.0
+pre-commit>=3.3.0
