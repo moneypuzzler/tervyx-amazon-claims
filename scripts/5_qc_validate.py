@@ -33,13 +33,21 @@ def validate_csv(csv_path: Path, schema: dict, name: str) -> tuple[bool, List[st
                 if v in ("true", "false"):
                     row_cleaned[k] = (v == "true")
 
-            # Convert numeric strings
+            # Convert numeric strings (respecting schema types)
             for k, v in row_cleaned.items():
-                if v and k.endswith(("_score", "_weight", "price")):
-                    try:
-                        row_cleaned[k] = float(v)
-                    except ValueError:
-                        pass
+                if v:
+                    # Integer fields (scores)
+                    if k.endswith("_score"):
+                        try:
+                            row_cleaned[k] = int(v)
+                        except ValueError:
+                            pass
+                    # Float fields (weights, prices)
+                    elif k.endswith(("_weight", "price")):
+                        try:
+                            row_cleaned[k] = float(v)
+                        except ValueError:
+                            pass
 
             try:
                 jsonschema.validate(row_cleaned, schema)

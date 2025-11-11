@@ -160,7 +160,7 @@ def main():
                     "asset_type": "image",
                     "url": asset["url"],
                     "wayback_url": "",  # TODO: Archive images
-                    "sha256": hashlib.sha256(asset["url"].encode()).hexdigest()[:16],
+                    "sha256": hashlib.sha256(asset["url"].encode()).hexdigest(),  # Full 64-char hash
                     "storage_uri": "",
                     "width": "",
                     "height": ""
