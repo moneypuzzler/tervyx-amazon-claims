@@ -22,33 +22,117 @@ def load_sampling_plan(plan_path: Path) -> dict:
 def generate_representative_urls(plan: dict) -> List[Dict]:
     """
     Generate R cohort URLs (stratified random sampling).
-
-    TODO: Implement actual sampling logic:
-    - Use Amazon Product Advertising API (if available)
-    - Or search-based discovery (e.g., Google Custom Search API)
-    - Apply stratified random sampling per allocation
-    - Ensure diversity across categories
+    Uses Google Custom Search API to discover Amazon products.
     """
+    import os
+    import re
+    from googleapiclient.discovery import build
+
+    api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
+    cx = os.getenv("GOOGLE_SEARCH_CX")
+
+    if not api_key or not cx:
+        print("⚠️  GOOGLE_SEARCH_API_KEY or GOOGLE_SEARCH_CX not set")
+        print("   Falling back to placeholder mode")
+        return _generate_placeholder_urls(plan, cohort="R")
+
     urls = []
     target_n = plan["representative"]["target_n"]
     strata = plan["representative"]["strata"]
 
+    service = build("customsearch", "v1", developerKey=api_key)
+
     for stratum in strata:
         name = stratum["name"]
+        query = stratum.get("query", f"site:amazon.com {name}")
         allocation = stratum["allocation"]
         n_samples = int(target_n * allocation)
 
-        # FIXME: Replace with actual sampling
-        for i in range(n_samples):
-            asin = f"R{name[:3].upper()}{i:05d}"  # Placeholder ASIN
-            urls.append({
-                "asin": asin,
-                "url": f"https://www.amazon.com/dp/{asin}",
-                "cohort": "R",
-                "method": "random",
-                "category_hint": name,
-                "stratum": name
-            })
+        print(f"  Searching {name}: {query} (target={n_samples})")
+
+        collected = 0
+        start_index = 1
+
+        while collected < n_samples and start_index <= 100:  # Google CSE max 100 results
+            try:
+                result = service.cse().list(
+                    q=query,
+                    cx=cx,
+                    start=start_index,
+                    num=min(10, n_samples - collected)
+                ).execute()
+
+                for item in result.get("items", []):
+                    url = item["link"]
+                    asin = _extract_asin_from_url(url)
+
+                    if asin and asin not in [u["asin"] for u in urls]:
+                        urls.append({
+                            "asin": asin,
+                            "url": f"https://www.amazon.com/dp/{asin}",
+                            "cohort": "R",
+                            "method": "search",
+                            "category_hint": name,
+                            "stratum": name
+                        })
+                        collected += 1
+
+                        if collected >= n_samples:
+                            break
+
+                start_index += 10
+
+            except Exception as e:
+                print(f"    ⚠️  Search error: {e}")
+                break
+
+        print(f"    ✓ Collected {collected}/{n_samples}")
+
+    return urls
+
+
+def _extract_asin_from_url(url: str) -> str:
+    """Extract ASIN from Amazon URL."""
+    import re
+
+    # Match /dp/ASIN or /gp/product/ASIN
+    patterns = [
+        r'/dp/([A-Z0-9]{10})',
+        r'/gp/product/([A-Z0-9]{10})',
+        r'/ASIN/([A-Z0-9]{10})'
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+
+    return ""
+
+
+def _generate_placeholder_urls(plan: dict, cohort: str) -> List[Dict]:
+    """Generate placeholder URLs when API is not available."""
+    urls = []
+
+    if cohort == "R":
+        target_n = plan["representative"]["target_n"]
+        strata = plan["representative"]["strata"]
+
+        for stratum in strata:
+            name = stratum["name"]
+            allocation = stratum["allocation"]
+            n_samples = int(target_n * allocation)
+
+            for i in range(n_samples):
+                asin = f"R{name[:3].upper()}{i:05d}"
+                urls.append({
+                    "asin": asin,
+                    "url": f"https://www.amazon.com/dp/{asin}",
+                    "cohort": "R",
+                    "method": "placeholder",
+                    "category_hint": name,
+                    "stratum": name
+                })
 
     return urls
 
@@ -56,12 +140,79 @@ def generate_representative_urls(plan: dict) -> List[Dict]:
 def generate_targeted_urls(plan: dict) -> List[Dict]:
     """
     Generate T cohort URLs (high-risk keywords/nodes).
-
-    TODO: Implement targeted discovery:
-    - Browse node IDs (if available)
-    - Keyword-based search
-    - Manual seed list for known problematic products
+    Uses Google Custom Search API for keyword-based discovery.
     """
+    import os
+    from googleapiclient.discovery import build
+
+    api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
+    cx = os.getenv("GOOGLE_SEARCH_CX")
+
+    if not api_key or not cx:
+        print("⚠️  GOOGLE_SEARCH_API_KEY or GOOGLE_SEARCH_CX not set")
+        print("   Falling back to placeholder mode")
+        return _generate_placeholder_urls_targeted(plan)
+
+    urls = []
+    nodes = plan["targeted"]["nodes"]
+    target_n = plan["targeted"]["target_n"]
+    samples_per_node = max(1, target_n // len(nodes))
+
+    service = build("customsearch", "v1", developerKey=api_key)
+
+    for node in nodes:
+        name = node["name"]
+        keywords = node.get("keywords", [])
+        gate = node.get("gate", "unknown")
+
+        print(f"  Searching {name} (gate={gate})")
+
+        collected = 0
+
+        for keyword in keywords:
+            if collected >= samples_per_node:
+                break
+
+            query = f"site:amazon.com {keyword}"
+
+            try:
+                result = service.cse().list(
+                    q=query,
+                    cx=cx,
+                    num=min(10, samples_per_node - collected)
+                ).execute()
+
+                for item in result.get("items", []):
+                    url = item["link"]
+                    asin = _extract_asin_from_url(url)
+
+                    if asin and asin not in [u["asin"] for u in urls]:
+                        urls.append({
+                            "asin": asin,
+                            "url": f"https://www.amazon.com/dp/{asin}",
+                            "cohort": "T",
+                            "method": "keyword",
+                            "category_hint": name,
+                            "stratum": name,
+                            "gate_target": gate,
+                            "keyword": keyword
+                        })
+                        collected += 1
+
+                        if collected >= samples_per_node:
+                            break
+
+            except Exception as e:
+                print(f"    ⚠️  Search error for '{keyword}': {e}")
+                continue
+
+        print(f"    ✓ Collected {collected}/{samples_per_node}")
+
+    return urls
+
+
+def _generate_placeholder_urls_targeted(plan: dict) -> List[Dict]:
+    """Generate placeholder URLs for T cohort when API is not available."""
     urls = []
     nodes = plan["targeted"]["nodes"]
 
@@ -70,17 +221,17 @@ def generate_targeted_urls(plan: dict) -> List[Dict]:
         keywords = node.get("keywords", [])
         gate = node.get("gate", "unknown")
 
-        # FIXME: Replace with actual search
-        for i, kw in enumerate(keywords[:5]):  # Max 5 per node for demo
+        for i, kw in enumerate(keywords[:5]):
             asin = f"T{name[:3].upper()}{i:05d}"
             urls.append({
                 "asin": asin,
                 "url": f"https://www.amazon.com/dp/{asin}",
                 "cohort": "T",
-                "method": "keyword",
+                "method": "placeholder",
                 "category_hint": name,
                 "stratum": name,
-                "gate_target": gate
+                "gate_target": gate,
+                "keyword": kw
             })
 
     return urls

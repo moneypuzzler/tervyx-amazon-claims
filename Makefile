@@ -10,6 +10,7 @@ HINTS := configs/policy_hints.yaml
 URLS := data/raw/product_urls.csv
 PAGES := data/extracted/pages.sha256.csv
 ASSETS := data/processed/assets_index.csv
+HTML_DIR := data/raw/html
 CLAIMS_RAW := data/extracted/claims_raw.jsonl
 PRODUCT_CSV := data/processed/product_info.csv
 CLAIMS_CSV := data/processed/claims.csv
@@ -31,11 +32,11 @@ generate:
 
 # Step 2: Scrape pages
 scrape:
-\tpython scripts/2_scrape_pages.py --in $(URLS) --out $(PAGES) --assets $(ASSETS) --policy $(SCRAPE_POLICY)
+\tpython scripts/2_scrape_pages.py --in $(URLS) --out $(PAGES) --assets $(ASSETS) --html-dir $(HTML_DIR) --policy $(SCRAPE_POLICY)
 
 # Step 3: Extract claims
 extract:
-\tpython scripts/3_extract_claims.py --assets $(ASSETS) --out $(CLAIMS_RAW) --policy $(EXTRACT_POLICY)
+\tpython scripts/3_extract_claims.py --pages $(PAGES) --assets $(ASSETS) --html-dir $(HTML_DIR) --out $(CLAIMS_RAW) --policy $(EXTRACT_POLICY)
 
 # Step 4: Normalize to CSV
 normalize:
@@ -65,7 +66,7 @@ report:
 
 # Clean generated data (keep configs/schemas)
 clean:
-\trm -rf data/raw/*.csv data/extracted/* data/processed/*.csv data/reports/*
+\trm -rf data/raw/*.csv data/raw/html/*.html data/extracted/* data/processed/*.csv data/reports/*
 \t@echo "✓ Cleaned data directories"
 
 # Quick test (sample 10)

@@ -9,12 +9,18 @@ pydantic>=2.0.0
 jsonschema>=4.17.0
 tqdm>=4.65.0
 
-# Image processing (optional, for OCR)
+# Image processing (for OCR)
 pillow>=10.0.0
-# pytesseract>=0.3.10  # Uncomment if using local OCR
+pytesseract>=0.3.10
 
-# LLM (optional, for extraction assistance)
-# google-generativeai>=0.3.0  # Uncomment if using Gemini
+# LLM (for extraction assistance)
+google-generativeai>=0.3.0
+
+# Google Custom Search API
+google-api-python-client>=2.100.0
+
+# Robotparser
+urllib3>=2.0.0
 
 # Development
 black>=23.0.0

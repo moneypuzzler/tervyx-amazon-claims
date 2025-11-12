@@ -23,10 +23,7 @@ def compute_weights(product_csv: Path, plan: dict) -> dict:
 
     Weight = (population_proportion / sample_proportion)
 
-    TODO: Implement proper weight calculation
-    - Use external population estimates (e.g., Amazon category sizes)
-    - Or post-stratification based on observed distributions
-    - Handle edge cases (zero samples in stratum)
+    Uses allocation proportions from sampling plan as proxy for population.
     """
     weights = {}
 
@@ -35,17 +32,48 @@ def compute_weights(product_csv: Path, plan: dict) -> dict:
     with open(product_csv) as f:
         products = list(csv.DictReader(f))
 
-    # Count R cohort by stratum
-    r_products = [p for p in products if p["sampling_cohort"] == "R"]
-    stratum_counts = Counter(p.get("category_path", "unknown") for p in r_products)
+    # Get R cohort products
+    r_products = [p for p in products if p.get("sampling_cohort") == "R"]
 
-    # FIXME: Use actual population proportions
-    # For now, assume equal weighting (weight=1.0)
+    if not r_products:
+        print("No R cohort products found")
+        return weights
+
+    # Build stratum -> allocation map from plan
+    stratum_allocation = {}
+    for stratum in plan["representative"]["strata"]:
+        stratum_allocation[stratum["name"]] = stratum["allocation"]
+
+    # Count observed samples per stratum
+    stratum_counts = Counter(p.get("category_hint", p.get("stratum", "unknown")) for p in r_products)
+    total_r = len(r_products)
+
+    # Compute weights
     for p in r_products:
-        weights[p["asin"]] = 1.0
+        stratum = p.get("category_hint", p.get("stratum", "unknown"))
+
+        # Get target allocation (population proportion proxy)
+        target_prop = stratum_allocation.get(stratum, 1.0 / len(stratum_allocation))
+
+        # Get observed sample proportion
+        sample_count = stratum_counts[stratum]
+        sample_prop = sample_count / total_r if total_r > 0 else 0
+
+        # Calculate weight
+        if sample_prop > 0:
+            weight = target_prop / sample_prop
+        else:
+            weight = 1.0
+
+        weights[p["asin"]] = round(weight, 4)
 
     print(f"Computed weights for {len(r_products)} R cohort products")
-    print(f"Strata: {dict(stratum_counts)}")
+    print(f"Strata distribution:")
+    for stratum, count in stratum_counts.items():
+        target = stratum_allocation.get(stratum, 0) * 100
+        actual = (count / total_r) * 100
+        avg_weight = sum(weights[p["asin"]] for p in r_products if p.get("category_hint", p.get("stratum")) == stratum) / count if count > 0 else 0
+        print(f"  {stratum}: {count} samples ({actual:.1f}% vs target {target:.1f}%), avg_weight={avg_weight:.3f}")
 
     return weights
 
