@@ -69,6 +69,9 @@ def save_to_wayback(url: str, policy: dict) -> Optional[str]:
             archive_url = response.headers.get("Content-Location")
 
             if archive_url:
+                # Content-Location is a relative path, make it absolute
+                if archive_url.startswith("/"):
+                    archive_url = f"https://web.archive.org{archive_url}"
                 print(f"  [wayback] ✓ Archived: {archive_url}")
                 return archive_url
             else:
