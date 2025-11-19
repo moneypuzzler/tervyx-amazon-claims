@@ -207,17 +207,25 @@ def extract_from_image(image_url: str, asset_id: str, policy: dict) -> List[Dict
         threshold = policy.get("ocr_confidence_threshold", 0.7) * 100
 
         for i, conf in enumerate(ocr_data["conf"]):
-            if int(conf) > threshold:
-                text = ocr_data["text"][i].strip()
-                if text:
-                    texts.append(text)
-                    bbox = [
-                        ocr_data["left"][i],
-                        ocr_data["top"][i],
-                        ocr_data["left"][i] + ocr_data["width"][i],
-                        ocr_data["top"][i] + ocr_data["height"][i]
-                    ]
-                    bboxes.append(bbox)
+            try:
+                conf_value = float(conf)
+                # Skip invalid confidence values (-1 means no confidence)
+                if conf_value < 0:
+                    continue
+                if conf_value > threshold:
+                    text = ocr_data["text"][i].strip()
+                    if text:
+                        texts.append(text)
+                        bbox = [
+                            ocr_data["left"][i],
+                            ocr_data["top"][i],
+                            ocr_data["left"][i] + ocr_data["width"][i],
+                            ocr_data["top"][i] + ocr_data["height"][i]
+                        ]
+                        bboxes.append(bbox)
+            except (ValueError, TypeError):
+                # Skip boxes with invalid confidence values
+                continue
 
         if not texts:
             return []
