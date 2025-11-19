@@ -33,9 +33,13 @@ wheels/
 
 # Data (large files should not be committed directly)
 data/raw/*.html
+data/raw/html/
 data/raw/html_snapshots/
+data/raw/*.csv
 data/extracted/*.jsonl
+data/extracted/*.csv
 data/processed/*.csv
+data/reports/*.csv
 !data/processed/shards/.gitkeep
 *.csv.gz
 

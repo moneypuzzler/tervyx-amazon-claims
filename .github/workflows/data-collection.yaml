@@ -1,0 +1,134 @@
+name: Data Collection (Real Scraping)
+
+# Manual trigger only - requires API keys in Secrets
+on:
+  workflow_dispatch:
+    inputs:
+      sample_size:
+        description: 'Number of products to collect'
+        required: true
+        default: '50'
+        type: choice
+        options:
+          - '10'
+          - '50'
+          - '100'
+          - '1000'
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Check API keys
+        run: |
+          if [ -z "${{ secrets.GOOGLE_SEARCH_API_KEY }}" ]; then
+            echo "❌ GOOGLE_SEARCH_API_KEY not set in repository secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GOOGLE_SEARCH_CX }}" ]; then
+            echo "❌ GOOGLE_SEARCH_CX not set in repository secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "❌ GEMINI_API_KEY not set in repository secrets"
+            exit 1
+          fi
+          echo "✓ All API keys configured"
+
+      - name: Generate URLs
+        run: |
+          python scripts/1_generate_urls.py \
+            --plan configs/sampling_plan.yaml \
+            --out data/raw/product_urls.csv \
+            --sample ${{ github.event.inputs.sample_size }}
+        env:
+          GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
+          GOOGLE_SEARCH_CX: ${{ secrets.GOOGLE_SEARCH_CX }}
+
+      - name: Scrape pages
+        run: |
+          python scripts/2_scrape_pages.py \
+            --in data/raw/product_urls.csv \
+            --out data/extracted/pages.sha256.csv \
+            --assets data/processed/assets_index.csv \
+            --html-dir data/raw/html/ \
+            --policy configs/scraping_policy.yaml
+
+      - name: Extract claims
+        run: |
+          python scripts/3_extract_claims.py \
+            --pages data/extracted/pages.sha256.csv \
+            --assets data/processed/assets_index.csv \
+            --html-dir data/raw/html/ \
+            --out data/extracted/claims_raw.jsonl \
+            --policy configs/extraction_policy.yaml
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Normalize to CSV
+        run: |
+          python scripts/4_normalize_to_csv.py \
+            --raw data/extracted/claims_raw.jsonl \
+            --product-urls data/raw/product_urls.csv \
+            --product-out data/processed/product_info.csv \
+            --claims-out data/processed/claims.csv \
+            --assets-in data/processed/assets_index.csv \
+            --hints configs/policy_hints.yaml
+
+      - name: Validate
+        run: |
+          python scripts/5_qc_validate.py \
+            --schemas schemas/ \
+            --product data/processed/product_info.csv \
+            --claims data/processed/claims.csv \
+            --assets data/processed/assets_index.csv
+
+      - name: Compute weights
+        run: |
+          python scripts/6_sampling_weights.py \
+            --product data/processed/product_info.csv \
+            --plan configs/sampling_plan.yaml
+
+      - name: Generate report
+        run: |
+          python scripts/7_pattern_report.py \
+            --claims data/processed/claims.csv \
+            --out data/reports/top_patterns.csv
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: claims-dataset-${{ github.event.inputs.sample_size }}
+          path: |
+            data/processed/product_info.csv
+            data/processed/claims.csv
+            data/reports/top_patterns.csv
+          retention-days: 90
+
+      - name: Summary
+        run: |
+          echo "## 📊 Data Collection Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Sample size**: ${{ github.event.inputs.sample_size }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Products**: $(wc -l < data/processed/product_info.csv) rows" >> $GITHUB_STEP_SUMMARY
+          echo "**Claims**: $(wc -l < data/processed/claims.csv) rows" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download artifacts from the workflow run page." >> $GITHUB_STEP_SUMMARY
