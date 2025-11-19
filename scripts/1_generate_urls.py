@@ -26,13 +26,20 @@ def generate_representative_urls(plan: dict) -> List[Dict]:
     """
     import os
     import re
-    from googleapiclient.discovery import build
 
     api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
     cx = os.getenv("GOOGLE_SEARCH_CX")
 
     if not api_key or not cx:
         print("⚠️  GOOGLE_SEARCH_API_KEY or GOOGLE_SEARCH_CX not set")
+        print("   Falling back to placeholder mode")
+        return _generate_placeholder_urls(plan, cohort="R")
+
+    # Only import if we have API keys
+    try:
+        from googleapiclient.discovery import build
+    except ImportError:
+        print("⚠️  google-api-python-client not installed")
         print("   Falling back to placeholder mode")
         return _generate_placeholder_urls(plan, cohort="R")
 
@@ -143,13 +150,20 @@ def generate_targeted_urls(plan: dict) -> List[Dict]:
     Uses Google Custom Search API for keyword-based discovery.
     """
     import os
-    from googleapiclient.discovery import build
 
     api_key = os.getenv("GOOGLE_SEARCH_API_KEY")
     cx = os.getenv("GOOGLE_SEARCH_CX")
 
     if not api_key or not cx:
         print("⚠️  GOOGLE_SEARCH_API_KEY or GOOGLE_SEARCH_CX not set")
+        print("   Falling back to placeholder mode")
+        return _generate_placeholder_urls_targeted(plan)
+
+    # Only import if we have API keys
+    try:
+        from googleapiclient.discovery import build
+    except ImportError:
+        print("⚠️  google-api-python-client not installed")
         print("   Falling back to placeholder mode")
         return _generate_placeholder_urls_targeted(plan)
 
