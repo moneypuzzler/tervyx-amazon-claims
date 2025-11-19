@@ -235,7 +235,10 @@ def extract_from_image(image_url: str, asset_id: str, policy: dict) -> List[Dict
         # Optional: LLM cleanup
         if policy.get("use_llm_for_ocr_cleanup", False):
             cleaned_claims = _cleanup_ocr_with_llm(raw_text, policy)
-            return cleaned_claims
+            # Only use LLM results if successful (non-empty)
+            if cleaned_claims:
+                return cleaned_claims
+            # Otherwise fall through to rule-based extraction
 
         # Rule-based extraction from OCR text
         claims = []

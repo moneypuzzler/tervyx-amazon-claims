@@ -46,9 +46,14 @@ jobs:
           python -m jsonschema -i configs/sampling_plan.yaml schemas/ || true
           echo "Schema validation passed"
 
-      - name: Run test pipeline
+      - name: Run test pipeline (placeholder mode)
         run: |
           make test
+        env:
+          # Optional: Set secrets for real data collection
+          # GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
+          # GOOGLE_SEARCH_CX: ${{ secrets.GOOGLE_SEARCH_CX }}
+          # GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Validate outputs
         run: |
